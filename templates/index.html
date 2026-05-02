@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Sistem prediksi Penyakit Ginjal Kronis (CKD) berbasis Artificial Neural Network dengan metode Backpropagation."/>
+  <title>Prediksi CKD – ANN Backpropagation</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1e2530;
+      --border:    #2d3748;
+      --accent:    #e05252;
+      --safe:      #34d399;
+      --text:      #e2e8f0;
+      --muted:     #8892a4;
+      --label:     #a0aec0;
+      --radius:    12px;
+    }
+    body           { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; }
+    /* ── Navbar ── */
+    .navbar        { background:var(--surface)!important; border-bottom:1px solid var(--border); }
+    .navbar-brand  { font-family:'Outfit',sans-serif; font-weight:800; color:var(--accent)!important; font-size:1.1rem; }
+    .nav-link      { color:var(--label)!important; font-size:.9rem; transition:.2s; }
+    .nav-link:hover, .nav-link.active { color:var(--text)!important; }
+    .nav-link.active { border-bottom:2px solid var(--accent); }
+    /* ── Header ── */
+    .page-header   { text-align:center; padding:2.5rem 1rem 1.5rem; }
+    .badge-pill    { display:inline-block; background:rgba(224,82,82,.12); border:1px solid rgba(224,82,82,.35);
+                     color:var(--accent); font-size:.72rem; font-weight:700; letter-spacing:.08em;
+                     text-transform:uppercase; padding:.3rem .9rem; border-radius:100px; margin-bottom:1rem; }
+    .page-header h1{ font-family:'Outfit',sans-serif; font-size:clamp(1.5rem,4vw,2.2rem); font-weight:800;
+                     background:linear-gradient(135deg,#f7a8a8,#e05252 50%,#c084fc); -webkit-background-clip:text;
+                     -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:.6rem; }
+    .page-header p { color:var(--muted); font-size:.93rem; max-width:520px; margin:0 auto; }
+    /* ── Card ── */
+    .card          { background:var(--surface); border:1px solid var(--border)!important; border-radius:var(--radius)!important; }
+    .card-title    { font-family:'Outfit',sans-serif; font-weight:700; font-size:1rem;
+                     display:flex; align-items:center; gap:.5rem; }
+    .sec-label     { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+                     color:var(--accent); display:flex; align-items:center; gap:.5rem; margin:1.2rem 0 .7rem; }
+    .sec-label::after{ content:''; flex:1; height:1px; background:var(--border); }
+    /* ── Form ── */
+    .form-label    { font-size:.78rem; font-weight:600; color:var(--label); text-transform:uppercase; letter-spacing:.04em; }
+    .form-hint     { font-size:.7rem; color:var(--muted); margin-top:2px; }
+    .form-control, .form-select {
+      background:var(--surface2)!important; border:1.5px solid var(--border)!important;
+      color:var(--text)!important; border-radius:var(--radius)!important; font-size:.9rem;
+    }
+    .form-control::placeholder { color:var(--muted); }
+    .form-control:focus, .form-select:focus {
+      border-color:var(--accent)!important; box-shadow:0 0 0 3px rgba(224,82,82,.2)!important; }
+    .form-control.is-invalid { border-color:#f87171!important; }
+    .form-select option { background:var(--surface2); }
+    /* ── Buttons ── */
+    .btn-predict   { background:linear-gradient(135deg,#e05252,#b91c1c); color:#fff; font-family:'Outfit',sans-serif;
+                     font-weight:700; font-size:1rem; border:none; border-radius:var(--radius);
+                     box-shadow:0 4px 18px rgba(224,82,82,.35); transition:.2s; }
+    .btn-predict:hover { box-shadow:0 6px 26px rgba(224,82,82,.5); transform:translateY(-1px); color:#fff; }
+    .btn-reset     { background:var(--surface2); color:var(--muted); border:1.5px solid var(--border);
+                     border-radius:var(--radius); font-family:'Outfit',sans-serif; font-weight:600; font-size:1rem; }
+    .btn-reset:hover { color:var(--text); border-color:var(--muted); }
+    /* ── Result ── */
+    .result-box    { border-radius:var(--radius); padding:1.8rem; text-align:center; animation:fadeUp .4s ease; }
+    .result-danger { background:rgba(224,82,82,.08); border:1px solid rgba(224,82,82,.35); }
+    .result-success{ background:rgba(52,211,153,.07); border:1px solid rgba(52,211,153,.3); }
+    .result-icon   { font-size:2.8rem; margin-bottom:.8rem; }
+    .result-status { font-family:'Outfit',sans-serif; font-weight:800; font-size:1.5rem; margin-bottom:.4rem; }
+    .result-danger  .result-status { color:var(--accent); }
+    .result-success .result-status { color:var(--safe); }
+    .result-desc   { color:var(--muted); font-size:.88rem; line-height:1.7; max-width:460px; margin:0 auto 1.2rem; }
+    .prob-label    { display:flex; justify-content:space-between; font-size:.78rem; color:var(--muted); margin-bottom:.35rem; }
+    .prob-label strong { color:var(--text); font-size:.95rem; }
+    .prob-bar      { height:9px; background:var(--surface2); border-radius:100px; overflow:hidden; }
+    .prob-fill-d   { height:100%; background:linear-gradient(90deg,#f87171,#e05252); border-radius:100px; transition:width .8s cubic-bezier(.4,0,.2,1); }
+    .prob-fill-s   { height:100%; background:linear-gradient(90deg,#6ee7b7,#34d399); border-radius:100px; transition:width .8s cubic-bezier(.4,0,.2,1); }
+    /* ── Error ── */
+    .error-box     { background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.35);
+                     border-radius:var(--radius); padding:.9rem 1.1rem; color:#f87171; font-size:.88rem; }
+    /* ── Disclaimer ── */
+    .disclaimer    { color:var(--muted); font-size:.75rem; text-align:center; margin-top:2rem; line-height:1.7; }
+    /* ── Anim ── */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ──────────────────────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="/">🫁 CKD Predictor</a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon" style="filter:invert(1)"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-2">
+        <li class="nav-item"><a class="nav-link active" href="/">🔍 Prediksi</a></li>
+        <li class="nav-item"><a class="nav-link" href="/evaluasi">📊 Evaluasi Model</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<div class="page-header">
+  <span class="badge-pill">Tugas 7 – ANN Backpropagation</span>
+  <h1>Prediksi Penyakit Ginjal Kronis</h1>
+  <p>Masukkan data klinis pasien untuk memperoleh prediksi risiko <strong>Chronic Kidney Disease (CKD)</strong>
+     menggunakan model Artificial Neural Network.</p>
+</div>
+
+<div class="container pb-5" style="max-width:800px">
+
+  <!-- Error -->
+  {% if error %}
+  <div class="error-box mb-3">⚠ {{ error }}</div>
+  {% endif %}
+
+  <!-- Hasil Prediksi -->
+  {% if result %}
+  <div class="result-box {% if result_class == 'danger' %}result-danger{% else %}result-success{% endif %} mb-4">
+    <div class="result-icon">{% if result_class == 'danger' %}⚠️{% else %}✅{% endif %}</div>
+    <div class="result-status">{{ result }}</div>
+    <p class="result-desc">{{ description }}</p>
+    <div style="max-width:320px;margin:0 auto">
+      <div class="prob-label">
+        <span>Probabilitas CKD</span>
+        <strong>{{ probability }}%</strong>
+      </div>
+      <div class="prob-bar">
+        <div id="probFill"
+             class="{% if result_class == 'danger' %}prob-fill-d{% else %}prob-fill-s{% endif %}"
+             style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    window.addEventListener('load',()=>{
+      const f=document.getElementById('probFill');
+      if(f) setTimeout(()=>f.style.width='{{ probability }}%',120);
+    });
+  </script>
+  {% endif %}
+
+  <!-- Form -->
+  <div class="card p-4">
+    <div class="card-title mb-3">
+      <span style="background:rgba(224,82,82,.15);border-radius:8px;width:32px;height:32px;display:grid;place-items:center">📋</span>
+      Data Klinis Pasien
+    </div>
+
+    <form id="predForm" action="/predict" method="post" novalidate>
+
+      <!-- Demografis -->
+      <div class="sec-label">Data Demografis</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="age">Usia (Tahun)</label>
+          <input id="age" type="number" name="age" class="form-control" min="1" max="120"
+                 placeholder="Contoh: 48" value="{{ form_data.age if form_data else '' }}"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="bp">Tekanan Darah (mm/Hg)</label>
+          <input id="bp" type="number" name="bp" class="form-control" min="0"
+                 placeholder="Contoh: 80" value="{{ form_data.bp if form_data else '' }}"/>
+        </div>
+      </div>
+
+      <!-- Urin -->
+      <div class="sec-label">Pemeriksaan Urin</div>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label" for="sg">Berat Jenis Urin</label>
+          <input id="sg" type="number" name="sg" class="form-control" step="0.001"
+                 placeholder="Contoh: 1.020" value="{{ form_data.sg if form_data else '' }}"/>
+          <div class="form-hint">Rentang normal: 1.005–1.025</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="al">Albumin</label>
+          <select id="al" name="al" class="form-select">
+            <option value="" disabled {% if not form_data or not form_data.al %}selected{% endif %}>— Pilih (0–5) —</option>
+            {% for i in range(6) %}
+            <option value="{{ i }}" {% if form_data and form_data.al == i|string %}selected{% endif %}>{{ i }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="su">Gula (Urin)</label>
+          <select id="su" name="su" class="form-select">
+            <option value="" disabled {% if not form_data or not form_data.su %}selected{% endif %}>— Pilih (0–5) —</option>
+            {% for i in range(6) %}
+            <option value="{{ i }}" {% if form_data and form_data.su == i|string %}selected{% endif %}>{{ i }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Darah -->
+      <div class="sec-label">Pemeriksaan Darah</div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="bgr">Glukosa Darah Acak (mg/dL)</label>
+          <input id="bgr" type="number" name="bgr" class="form-control"
+                 placeholder="Contoh: 121" value="{{ form_data.bgr if form_data else '' }}"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="bu">Urea Darah (mg/dL)</label>
+          <input id="bu" type="number" name="bu" class="form-control"
+                 placeholder="Contoh: 36" value="{{ form_data.bu if form_data else '' }}"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="sc">Kreatinin Serum (mg/dL)</label>
+          <input id="sc" type="number" name="sc" class="form-control" step="0.1"
+                 placeholder="Contoh: 1.2" value="{{ form_data.sc if form_data else '' }}"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="sod">Natrium / Sodium (mEq/L)</label>
+          <input id="sod" type="number" name="sod" class="form-control"
+                 placeholder="Contoh: 138" value="{{ form_data.sod if form_data else '' }}"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="pot">Kalium / Potasium (mEq/L)</label>
+          <input id="pot" type="number" name="pot" class="form-control" step="0.1"
+                 placeholder="Contoh: 4.5" value="{{ form_data.pot if form_data else '' }}"/>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="hemo">Hemoglobin (g/dL)</label>
+          <input id="hemo" type="number" name="hemo" class="form-control" step="0.1"
+                 placeholder="Contoh: 15.4" value="{{ form_data.hemo if form_data else '' }}"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="pcv">Volume Sel Terkemas (%)</label>
+          <input id="pcv" type="number" name="pcv" class="form-control"
+                 placeholder="Contoh: 44" value="{{ form_data.pcv if form_data else '' }}"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="wc">Sel Darah Putih (cells/cmm)</label>
+          <input id="wc" type="number" name="wc" class="form-control"
+                 placeholder="Contoh: 7800" value="{{ form_data.wc if form_data else '' }}"/>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="rc">Sel Darah Merah (millions/cmm)</label>
+          <input id="rc" type="number" name="rc" class="form-control" step="0.1"
+                 placeholder="Contoh: 5.2" value="{{ form_data.rc if form_data else '' }}"/>
+        </div>
+      </div>
+
+      <!-- Tombol -->
+      <div class="d-flex gap-3 mt-4">
+        <button type="submit" id="submitBtn" class="btn btn-predict flex-fill py-2">
+          🔍 &nbsp;Prediksi CKD
+        </button>
+        <button type="button" class="btn btn-reset flex-fill py-2" onclick="window.location.href='/'">
+          ↺ &nbsp;Reset
+        </button>
+      </div>
+
+    </form>
+  </div><!-- /card -->
+
+  <!-- Disclaimer -->
+  <p class="disclaimer">
+    <strong>⚠ Disclaimer:</strong> Sistem ini bersifat akademik dan merupakan alat bantu prediksi berbasis ANN.
+    <strong>Bukan pengganti diagnosis dokter.</strong> Selalu konsultasikan dengan tenaga medis profesional.
+  </p>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('predForm').addEventListener('submit', function(e){
+  let ok = true;
+  this.querySelectorAll('input,select').forEach(el=>{
+    el.classList.remove('is-invalid');
+    if(!el.value.toString().trim()){ el.classList.add('is-invalid'); ok=false; }
+  });
+  if(!ok){ e.preventDefault(); alert('Harap lengkapi semua field sebelum melakukan prediksi.'); }
+});
+</script>
+</body>
+</html>

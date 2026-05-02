@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Model & Scaler (file besar, generate ulang dengan model_train.py)
+ckd_model.h5
+scaler.pkl
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# IDE / OS
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Logs
+*.log

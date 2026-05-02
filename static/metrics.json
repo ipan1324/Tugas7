@@ -1,0 +1,36 @@
+{
+  "accuracy": 97.5,
+  "precision": 100.0,
+  "recall": 96.0,
+  "f1_score": 97.96,
+  "loss": 0.0593,
+  "confusion_matrix": [
+    [
+      30,
+      0
+    ],
+    [
+      2,
+      48
+    ]
+  ],
+  "epochs_run": 57,
+  "train_samples": 320,
+  "test_samples": 80,
+  "features": [
+    "age",
+    "bp",
+    "sg",
+    "al",
+    "su",
+    "bgr",
+    "bu",
+    "sc",
+    "sod",
+    "pot",
+    "hemo",
+    "pcv",
+    "wc",
+    "rc"
+  ]
+}

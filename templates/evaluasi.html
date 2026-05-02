@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Halaman evaluasi model ANN Backpropagation untuk prediksi Penyakit Ginjal Kronis (CKD)."/>
+  <title>Evaluasi Model – ANN Backpropagation</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root {
+      --bg:      #0d1117; --surface:#161b22; --surface2:#1e2530;
+      --border:  #2d3748; --accent:#e05252;  --safe:#34d399;
+      --text:    #e2e8f0; --muted:#8892a4;   --label:#a0aec0; --radius:12px;
+    }
+    body          { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; }
+    .navbar       { background:var(--surface)!important; border-bottom:1px solid var(--border); }
+    .navbar-brand { font-family:'Outfit',sans-serif; font-weight:800; color:var(--accent)!important; font-size:1.1rem; }
+    .nav-link     { color:var(--label)!important; font-size:.9rem; }
+    .nav-link:hover, .nav-link.active { color:var(--text)!important; }
+    .nav-link.active { border-bottom:2px solid var(--accent); }
+
+    .page-header  { text-align:center; padding:2.5rem 1rem 1.5rem; }
+    .badge-pill   { display:inline-block; background:rgba(224,82,82,.12); border:1px solid rgba(224,82,82,.35);
+                    color:var(--accent); font-size:.72rem; font-weight:700; letter-spacing:.08em;
+                    text-transform:uppercase; padding:.3rem .9rem; border-radius:100px; margin-bottom:1rem; }
+    .page-header h1 { font-family:'Outfit',sans-serif; font-size:clamp(1.4rem,3.5vw,2rem); font-weight:800;
+                      background:linear-gradient(135deg,#f7a8a8,#e05252 50%,#c084fc);
+                      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+                      background-clip:text; margin-bottom:.6rem; }
+    .page-header p { color:var(--muted); font-size:.9rem; }
+
+    .card         { background:var(--surface); border:1px solid var(--border)!important; border-radius:var(--radius)!important; }
+    .card-title   { font-family:'Outfit',sans-serif; font-weight:700; font-size:1rem; }
+    .sec-label    { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+                    color:var(--accent); display:flex; align-items:center; gap:.5rem; margin:1.2rem 0 .7rem; }
+    .sec-label::after{ content:''; flex:1; height:1px; background:var(--border); }
+
+    /* Metric Cards */
+    .metric-card  { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius);
+                    padding:1.4rem 1rem; text-align:center; }
+    .metric-val   { font-family:'Outfit',sans-serif; font-size:2rem; font-weight:800; line-height:1; margin-bottom:.3rem; }
+    .metric-name  { font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); }
+    .metric-acc   { color:#60a5fa; }
+    .metric-prec  { color:#a78bfa; }
+    .metric-rec   { color:#f97316; }
+    .metric-f1    { color:#34d399; }
+
+    /* Confusion Matrix */
+    .cm-table     { width:100%; border-collapse:separate; border-spacing:6px; }
+    .cm-table td  { padding:.8rem; text-align:center; border-radius:8px; font-weight:600; font-size:.95rem; }
+    .cm-tn        { background:rgba(52,211,153,.15); color:#34d399; }
+    .cm-fp        { background:rgba(248,113,113,.15); color:#f87171; }
+    .cm-fn        { background:rgba(248,113,113,.15); color:#f87171; }
+    .cm-tp        { background:rgba(52,211,153,.15); color:#34d399; }
+    .cm-header    { font-size:.72rem; color:var(--muted); font-weight:600; text-transform:uppercase; }
+
+    /* Plots */
+    .plot-img     { width:100%; border-radius:var(--radius); border:1px solid var(--border); }
+
+    /* Architecture table */
+    .table        { --bs-table-bg:transparent; --bs-table-color:var(--text);
+                    --bs-table-border-color:var(--border); font-size:.88rem; }
+    .table thead th { background:var(--surface2); color:var(--label); font-size:.75rem;
+                      text-transform:uppercase; letter-spacing:.05em; border-color:var(--border); }
+    .table tbody td { border-color:var(--border); vertical-align:middle; }
+
+    .badge-layer  { background:rgba(224,82,82,.15); color:var(--accent); font-size:.75rem;
+                    border-radius:6px; padding:.2rem .55rem; font-weight:600; }
+
+    /* Info box */
+    .info-box     { background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.3);
+                    border-radius:var(--radius); padding:1rem 1.2rem; color:#a5b4fc; font-size:.87rem; }
+    .error-box    { background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.35);
+                    border-radius:var(--radius); padding:1rem 1.2rem; color:#f87171; font-size:.88rem; }
+
+    .disclaimer   { color:var(--muted); font-size:.75rem; text-align:center; margin-top:2rem; line-height:1.7; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="/">🫁 CKD Predictor</a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon" style="filter:invert(1)"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-2">
+        <li class="nav-item"><a class="nav-link" href="/">🔍 Prediksi</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/evaluasi">📊 Evaluasi Model</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Header -->
+<div class="page-header">
+  <span class="badge-pill">Evaluasi Model ANN</span>
+  <h1>Hasil Evaluasi Model Backpropagation</h1>
+  <p>Metrik kinerja model, confusion matrix, dan visualisasi proses pelatihan</p>
+</div>
+
+<div class="container pb-5" style="max-width:900px">
+
+  {% if error %}
+  <div class="error-box mb-4">⚠ {{ error }}</div>
+  {% endif %}
+
+  {% if metrics %}
+
+  <!-- ── 1. Metric Cards ─────────────────────────────────────── -->
+  <div class="card p-4 mb-4">
+    <div class="card-title mb-3">📈 Metrik Evaluasi</div>
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="metric-val metric-acc">{{ metrics.accuracy }}%</div>
+          <div class="metric-name">Accuracy</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="metric-val metric-prec">{{ metrics.precision }}%</div>
+          <div class="metric-name">Precision</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="metric-val metric-rec">{{ metrics.recall }}%</div>
+          <div class="metric-name">Recall</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="metric-val metric-f1">{{ metrics.f1_score }}%</div>
+          <div class="metric-name">F1-Score</div>
+        </div>
+      </div>
+    </div>
+    <div class="info-box">
+      ℹ Model dilatih menggunakan <strong>{{ metrics.train_samples }} sampel training</strong>
+      dan diuji pada <strong>{{ metrics.test_samples }} sampel test</strong>.
+      Proses training berlangsung selama <strong>{{ metrics.epochs_run }} epoch</strong>
+      dengan Binary Cross-Entropy loss akhir: <strong>{{ metrics.loss }}</strong>.
+    </div>
+  </div>
+
+  <!-- ── 2. Confusion Matrix ────────────────────────────────── -->
+  <div class="card p-4 mb-4">
+    <div class="card-title mb-3">🔢 Confusion Matrix</div>
+    {% set cm = metrics.confusion_matrix %}
+    <div class="row g-0 justify-content-center">
+      <div class="col-md-7">
+        <table class="cm-table">
+          <tr>
+            <td></td>
+            <td class="cm-header">Prediksi: Tidak CKD</td>
+            <td class="cm-header">Prediksi: CKD</td>
+          </tr>
+          <tr>
+            <td class="cm-header">Aktual: Tidak CKD</td>
+            <td class="cm-tn">
+              <div style="font-size:1.5rem">{{ cm[0][0] }}</div>
+              <div style="font-size:.7rem;margin-top:4px;opacity:.8">True Negative (TN)</div>
+            </td>
+            <td class="cm-fp">
+              <div style="font-size:1.5rem">{{ cm[0][1] }}</div>
+              <div style="font-size:.7rem;margin-top:4px;opacity:.8">False Positive (FP)</div>
+            </td>
+          </tr>
+          <tr>
+            <td class="cm-header">Aktual: CKD</td>
+            <td class="cm-fn">
+              <div style="font-size:1.5rem">{{ cm[1][0] }}</div>
+              <div style="font-size:.7rem;margin-top:4px;opacity:.8">False Negative (FN)</div>
+            </td>
+            <td class="cm-tp">
+              <div style="font-size:1.5rem">{{ cm[1][1] }}</div>
+              <div style="font-size:.7rem;margin-top:4px;opacity:.8">True Positive (TP)</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. Grafik Training ─────────────────────────────────── -->
+  <div class="card p-4 mb-4">
+    <div class="card-title mb-3">📉 Visualisasi Proses Training</div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <p style="font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:.5rem">Kurva Loss per Epoch</p>
+        <img src="/static/plots/loss_curve.png" alt="Loss Curve" class="plot-img"/>
+      </div>
+      <div class="col-md-6">
+        <p style="font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:.5rem">Kurva Akurasi per Epoch</p>
+        <img src="/static/plots/accuracy_curve.png" alt="Accuracy Curve" class="plot-img"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. Arsitektur Model ────────────────────────────────── -->
+  <div class="card p-4 mb-4">
+    <div class="card-title mb-3">🏗 Arsitektur Model ANN</div>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Tipe</th>
+          <th>Neuron</th>
+          <th>Aktivasi</th>
+          <th>Keterangan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge-layer">Input</span></td>
+          <td>Dense</td>
+          <td>64</td>
+          <td>ReLU</td>
+          <td>{{ metrics.features | length }} fitur input → 64 neuron</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>BatchNormalization</td>
+          <td>–</td>
+          <td>–</td>
+          <td>Stabilisasi distribusi aktivasi</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>Dropout</td>
+          <td>–</td>
+          <td>–</td>
+          <td>Rate 0.3 – mencegah overfitting</td>
+        </tr>
+        <tr>
+          <td><span class="badge-layer">Hidden 1</span></td>
+          <td>Dense</td>
+          <td>32</td>
+          <td>ReLU</td>
+          <td>Ekstraksi fitur lanjut</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>BatchNormalization + Dropout 0.2</td>
+          <td>–</td>
+          <td>–</td>
+          <td>Regularisasi</td>
+        </tr>
+        <tr>
+          <td><span class="badge-layer">Hidden 2</span></td>
+          <td>Dense</td>
+          <td>16</td>
+          <td>ReLU</td>
+          <td>Reduksi dimensi representasi</td>
+        </tr>
+        <tr>
+          <td><span class="badge-layer">Output</span></td>
+          <td>Dense</td>
+          <td>1</td>
+          <td>Sigmoid</td>
+          <td>Output probabilitas [0,1] – threshold 0.5</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="info-box mt-3">
+      <strong>Optimizer:</strong> Adam (lr=0.001) &nbsp;|&nbsp;
+      <strong>Loss Function:</strong> Binary Cross-Entropy &nbsp;|&nbsp;
+      <strong>Early Stopping:</strong> patience=15, monitor=val_loss
+    </div>
+  </div>
+
+  <!-- ── 5. Fitur yang Digunakan ────────────────────────────── -->
+  <div class="card p-4 mb-4">
+    <div class="card-title mb-3">🧬 Fitur Input Model ({{ metrics.features | length }} Fitur)</div>
+    <div class="row g-2">
+      {% for f in metrics.features %}
+      <div class="col-6 col-md-3">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+                    padding:.5rem .8rem;font-size:.82rem;font-weight:600;color:var(--label)">
+          {{ loop.index }}. {{ f }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% endif %}
+
+  <p class="disclaimer">
+    <strong>⚠ Disclaimer:</strong> Sistem ini bersifat akademik sebagai implementasi Tugas 7 Backpropagation.
+    Bukan pengganti diagnosis dokter profesional.
+  </p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
