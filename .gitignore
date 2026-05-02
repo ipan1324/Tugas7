@@ -9,8 +9,6 @@ dist/
 build/
 
 # Model & Scaler (file besar, generate ulang dengan model_train.py)
-ckd_model.h5
-scaler.pkl
 
 # Virtual Environment
 venv/
